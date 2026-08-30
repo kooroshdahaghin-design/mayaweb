@@ -1,0 +1,2631 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MAYA — AI</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Vazirmatn:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+    <style>
+        /* ---- Reset & root ---- */
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #030303;
+            --surface: rgba(18, 18, 18, .78);
+            --surface2: rgba(255, 255, 255, .045);
+            --surface3: rgba(255, 255, 255, .07);
+            --border: rgba(255, 255, 255, .09);
+            --border-light: rgba(255, 255, 255, .16);
+            --text: #f5f5f5;
+            --muted: #666;
+            --muted2: #888;
+            --danger: #ff5f5f;
+            --ease: cubic-bezier(.22, 1, .36, 1);
+            --ease-spring: cubic-bezier(.34, 1.56, .64, 1);
+            --orb1: rgba(120, 90, 255, .12);
+            --orb2: rgba(255, 140, 80, .07);
+            --orb3: rgba(80, 200, 255, .06);
+            --code-bg: rgba(255, 255, 255, .05);
+            --code-border: rgba(255, 255, 255, .08);
+            --code-text: #e8e8e8;
+            --inline-code-bg: rgba(255, 255, 255, .07);
+            --inline-code-border: rgba(255, 255, 255, .09);
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+        }
+
+        body {
+            overflow: hidden;
+            background: var(--bg);
+            color: var(--text);
+            font-family: Inter, Vazirmatn, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            cursor: none;
+        }
+
+        button,
+        textarea,
+        input {
+            font: inherit;
+            cursor: none;
+        }
+
+        button {
+            border: 0;
+            background: none;
+        }
+
+        a {
+            color: #a8b4ff;
+            text-decoration: none;
+            border-bottom: 1px solid rgba(168, 180, 255, .3);
+            transition: border-color .25s, color .25s;
+        }
+
+        a:hover {
+            color: #c5ceff;
+            border-bottom-color: rgba(168, 180, 255, .6);
+        }
+
+        /* ---- Custom cursor ---- */
+        .cursor-dot {
+            position: fixed;
+            width: 6px;
+            height: 6px;
+            background: #fff;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 15px rgba(255, 255, 255, .8), 0 0 35px rgba(255, 255, 255, .3);
+            transition: width .2s, height .2s, opacity .3s;
+        }
+
+        .cursor-dot.active {
+            width: 12px;
+            height: 12px;
+            opacity: .7;
+        }
+
+        .cursor-glow {
+            position: fixed;
+            width: 280px;
+            height: 280px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9998;
+            transform: translate(-50%, -50%);
+            background: radial-gradient(circle, rgba(255, 255, 255, .045) 0%, transparent 65%);
+            transition: width .4s, height .4s, opacity .3s;
+            opacity: 0;
+        }
+
+        .cursor-glow.visible {
+            opacity: 1;
+        }
+
+        .cursor-glow.active {
+            width: 340px;
+            height: 340px;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                cursor: auto;
+            }
+            .cursor-dot,
+            .cursor-glow {
+                display: none;
+            }
+            button,
+            textarea,
+            input {
+                cursor: pointer;
+            }
+        }
+
+        /* ---- Ambient orbs ---- */
+        .ambient-orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            pointer-events: none;
+            z-index: 1;
+            opacity: .55;
+            will-change: transform;
+            animation: orbDrift 18s ease-in-out infinite alternate;
+        }
+
+        .ambient-orb.orb-1 {
+            width: 500px;
+            height: 500px;
+            background: var(--orb1);
+            top: -15%;
+            left: -10%;
+            animation-duration: 22s;
+            animation-delay: 0s;
+        }
+
+        .ambient-orb.orb-2 {
+            width: 420px;
+            height: 420px;
+            background: var(--orb2);
+            bottom: -10%;
+            right: -5%;
+            animation-duration: 26s;
+            animation-delay: -4s;
+        }
+
+        .ambient-orb.orb-3 {
+            width: 350px;
+            height: 350px;
+            background: var(--orb3);
+            top: 40%;
+            left: 55%;
+            animation-duration: 20s;
+            animation-delay: -8s;
+        }
+
+        @keyframes orbDrift {
+            0% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(40px, -30px) scale(1.08); }
+            50% { transform: translate(-25px, 40px) scale(.95); }
+            75% { transform: translate(30px, 20px) scale(1.03); }
+            100% { transform: translate(-15px, -35px) scale(1.06); }
+        }
+
+        /* ---- Scroll progress ---- */
+        .scroll-progress {
+            position: fixed;
+            top: 0;
+            right: 0;
+            left: 0;
+            height: 2px;
+            z-index: 80;
+            pointer-events: none;
+            background: transparent;
+            transform-origin: right;
+            transform: scaleX(0);
+            transition: transform .1s linear;
+            background: linear-gradient(90deg, rgba(255, 255, 255, .05), rgba(255, 255, 255, .35), #fff);
+            box-shadow: 0 0 12px rgba(255, 255, 255, .5);
+        }
+
+        /* ---- App ---- */
+        .app {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            background: radial-gradient(circle at 50% 40%, rgba(255, 255, 255, .045), transparent 34%), #030303;
+        }
+
+        /* ---- Noise ---- */
+        .noise {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            pointer-events: none;
+            opacity: .025;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        }
+
+        /* ---- Light streaks ---- */
+        .light-streak {
+            position: fixed;
+            width: 200px;
+            height: 1px;
+            pointer-events: none;
+            z-index: 2;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .7), transparent);
+            animation: streakMove 4s linear infinite;
+            opacity: 0;
+            will-change: transform, opacity;
+        }
+
+        @keyframes streakMove {
+            0% { opacity: 0; transform: translateX(-100%) rotate(-20deg); }
+            5% { opacity: 1; }
+            25% { opacity: .7; }
+            50% { opacity: 0; transform: translateX(100vw) rotate(-20deg); }
+            100% { opacity: 0; transform: translateX(100vw) rotate(-20deg); }
+        }
+
+        /* ---- Particles ---- */
+        #particles {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            opacity: .45;
+            z-index: 1;
+        }
+
+        /* ---- Loader ---- */
+        .loader {
+            position: fixed;
+            inset: 0;
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #020202;
+            transition: opacity 1.1s var(--ease), visibility 1.1s;
+        }
+
+        .loader.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .loader-content {
+            text-align: center;
+            position: relative;
+        }
+
+        .maya-loader {
+            position: relative;
+            font-size: clamp(80px, 15vw, 210px);
+            line-height: .8;
+            font-weight: 700;
+            letter-spacing: -.09em;
+            color: #f5f5f5;
+            animation: loaderIn 1.6s var(--ease) both, loaderFloat 4s 2s ease-in-out infinite;
+        }
+
+        .maya-loader::after {
+            content: "MAYA";
+            position: absolute;
+            inset: 0;
+            color: transparent;
+            background: linear-gradient(110deg, transparent 25%, rgba(255, 255, 255, .95) 50%, transparent 75%);
+            background-size: 220% 100%;
+            background-position: 120% 0;
+            -webkit-background-clip: text;
+            background-clip: text;
+            animation: shine 3s ease-in-out infinite;
+        }
+
+        .loader-line {
+            width: 130px;
+            height: 1px;
+            margin: 45px auto 18px;
+            background: linear-gradient(90deg, transparent, white, transparent);
+            animation: lineIn 1s .6s var(--ease) both;
+        }
+
+        .loader-status {
+            color: #555;
+            font-size: 10px;
+            letter-spacing: .3em;
+            animation: fadeIn 1s 1s both;
+        }
+
+        .loader-status::after {
+            content: "";
+            animation: dots 1.4s infinite;
+        }
+
+        .loader-progress-ring {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, .06);
+            pointer-events: none;
+            animation: ringPulse 2s ease-in-out infinite;
+        }
+
+        .loader-progress-ring::before {
+            content: "";
+            position: absolute;
+            inset: -8px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, .03);
+            animation: ringPulse 2s .3s ease-in-out infinite;
+        }
+
+        @keyframes ringPulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: .5; }
+            50% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+        }
+
+        /* ---- Chat App ---- */
+        .chat-app {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transform: scale(1.015);
+            transition: opacity 1.2s var(--ease), transform 1.3s var(--ease);
+            z-index: 10;
+        }
+
+        .chat-app.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* ---- Header ---- */
+        .header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 85px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 34px;
+            z-index: 20;
+            background: linear-gradient(180deg, rgba(3, 3, 3, .96), rgba(3, 3, 3, .4), transparent);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: transform .3s var(--ease);
+        }
+
+        .brand:hover {
+            transform: scale(1.03);
+        }
+
+        .brand-mark {
+            width: 34px;
+            height: 34px;
+            border: 1px solid rgba(255, 255, 255, .17);
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            box-shadow: 0 0 30px rgba(255, 255, 255, .04);
+            transition: box-shadow .4s, border-color .4s;
+            animation: brandMarkPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes brandMarkPulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(255, 255, 255, .04); }
+            50% { box-shadow: 0 0 40px rgba(255, 255, 255, .1); }
+        }
+
+        .brand-mark::before {
+            content: "";
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: white;
+            box-shadow: 0 0 18px rgba(255, 255, 255, .75);
+            animation: brandDotPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes brandDotPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        .brand-name {
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: .2em;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 9px;
+            letter-spacing: .15em;
+            color: #555;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: white;
+            box-shadow: 0 0 12px white;
+            animation: pulse 2s infinite;
+        }
+
+        /* ---- Memory trigger ---- */
+        .memory-trigger {
+            position: fixed;
+            top: 24px;
+            right: 28px;
+            z-index: 45;
+            width: 40px;
+            height: 40px;
+            border-radius: 13px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+            color: white;
+            background: rgba(15, 15, 15, .58);
+            border: 1px solid rgba(255, 255, 255, .08);
+            backdrop-filter: blur(20px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, .4);
+            transition: transform .3s var(--ease), background .3s, border-color .3s, box-shadow .3s;
+            will-change: transform;
+        }
+
+        .memory-trigger:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, .07);
+            border-color: rgba(255, 255, 255, .16);
+            box-shadow: 0 18px 45px rgba(0, 0, 0, .5), 0 0 25px rgba(255, 255, 255, .05);
+        }
+
+        .memory-trigger span {
+            width: 14px;
+            height: 1px;
+            background: #aaa;
+            transition: .3s var(--ease);
+        }
+
+        .memory-trigger.open span:first-child {
+            transform: translateY(3px) rotate(45deg);
+        }
+
+        .memory-trigger.open span:last-child {
+            transform: translateY(-3px) rotate(-45deg);
+        }
+
+        /* ---- Ripple ---- */
+        .ripple-container {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, .3);
+            transform: scale(0);
+            animation: rippleAnim .7s ease-out forwards;
+            pointer-events: none;
+        }
+
+        @keyframes rippleAnim {
+            to { transform: scale(4); opacity: 0; }
+        }
+
+        /* ---- Conversation ---- */
+        .conversation {
+            position: absolute;
+            inset: 0;
+            overflow-y: auto;
+            scrollbar-width: none;
+            padding: 120px max(20px, calc((100vw - 920px) / 2)) 190px;
+            scroll-behavior: smooth;
+        }
+
+        .conversation::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* ---- Welcome ---- */
+        .welcome {
+            min-height: 65vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            animation: welcomeIn 1.2s var(--ease);
+            position: relative;
+        }
+
+        .welcome-orb {
+            position: relative;
+            width: 90px;
+            height: 90px;
+            margin-bottom: 34px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 32% 28%, #fff, #999 14%, #222 48%, #000 72%);
+            box-shadow: 0 0 70px rgba(255, 255, 255, .08), inset 0 0 30px rgba(255, 255, 255, .12);
+            animation: orbFloat 5s ease-in-out infinite;
+            will-change: transform;
+            transition: transform .3s var(--ease);
+            transform-style: preserve-3d;
+        }
+
+        .welcome-orb::before {
+            content: "";
+            position: absolute;
+            inset: -14px;
+            border: 1px solid rgba(255, 255, 255, .07);
+            border-radius: 50%;
+            animation: orbRing 7s linear infinite;
+        }
+
+        .welcome-orb::after {
+            content: "";
+            position: absolute;
+            top: 18%;
+            left: 22%;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, .85);
+            filter: blur(4px);
+            animation: orbGlint 3s ease-in-out infinite;
+        }
+
+        @keyframes orbGlint {
+            0%, 100% { opacity: .3; transform: scale(.8); }
+            50% { opacity: 1; transform: scale(1.3); }
+        }
+
+        .welcome h1 {
+            font-size: clamp(45px, 6vw, 75px);
+            font-weight: 600;
+            letter-spacing: -.07em;
+            transition: letter-spacing .6s var(--ease);
+        }
+
+        .welcome:hover h1 {
+            letter-spacing: -.04em;
+        }
+
+        .welcome p {
+            margin-top: 14px;
+            color: #555;
+            font-family: Vazirmatn, sans-serif;
+            font-size: 13px;
+            transition: color .4s;
+        }
+
+        .welcome:hover p {
+            color: #777;
+        }
+
+        /* ---- Message ---- */
+        .message {
+            display: flex;
+            margin-bottom: 28px;
+            opacity: 0;
+            transform: translateY(18px);
+            animation: messageIn .6s var(--ease) forwards;
+            transition: transform .25s var(--ease);
+            will-change: transform;
+        }
+
+        .message:hover {
+            transform: translateY(-2px) scale(1.005);
+        }
+
+        .message.user {
+            justify-content: flex-start;
+        }
+
+        .message.ai {
+            justify-content: flex-end;
+        }
+
+        .message-box {
+            max-width: min(720px, 85%);
+            font-family: Vazirmatn, Inter, sans-serif;
+            font-size: 14px;
+            line-height: 2;
+            padding: 16px 20px;
+            border-radius: 20px;
+            transition: box-shadow .4s, border-color .4s, background .4s;
+            will-change: transform;
+        }
+
+        .user .message-box {
+            background: rgba(255, 255, 255, .07);
+            border: 1px solid rgba(255, 255, 255, .06);
+            border-bottom-right-radius: 5px;
+            transition: background .3s, border-color .3s, box-shadow .3s, transform .3s var(--ease);
+        }
+
+        .user .message-box:hover {
+            background: rgba(255, 255, 255, .1);
+            border-color: rgba(255, 255, 255, .12);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, .3), 0 0 20px rgba(255, 255, 255, .04);
+            transform: translateY(-2px);
+        }
+
+        .ai .message-box {
+            max-width: 760px;
+            padding: 8px 5px;
+            color: #ddd;
+            background: transparent;
+            transition: transform .3s var(--ease);
+        }
+
+        .ai .message-box:hover {
+            transform: translateY(-1px);
+        }
+
+        .ai-label {
+            margin-bottom: 8px;
+            font-family: Inter, sans-serif;
+            color: #555;
+            font-size: 9px;
+            letter-spacing: .22em;
+            transition: color .3s;
+        }
+
+        .message.ai:hover .ai-label {
+            color: #888;
+        }
+
+        /* ---- Message content ---- */
+        .message-content {
+            font-family: Vazirmatn, Inter, sans-serif;
+            font-size: 14px;
+            line-height: 2.1;
+            word-break: break-word;
+            direction: auto;
+            white-space: normal;
+        }
+
+        .message-content pre {
+            direction: ltr;
+            text-align: left;
+            background: var(--code-bg);
+            border: 1px solid var(--code-border);
+            border-radius: 14px;
+            padding: 16px 18px;
+            margin: 14px 0;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.8;
+            color: var(--code-text);
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .message-content code {
+            direction: ltr;
+            text-align: left;
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            font-size: 12px;
+            background: var(--inline-code-bg);
+            border: 1px solid var(--inline-code-border);
+            border-radius: 6px;
+            padding: 2px 7px;
+            color: #d4d4d4;
+        }
+
+        .message-content pre code {
+            background: transparent;
+            border: 0;
+            padding: 0;
+            border-radius: 0;
+            color: inherit;
+            font-size: inherit;
+        }
+
+        .message-content h2,
+        .message-content h3,
+        .message-content h4 {
+            font-family: Vazirmatn, Inter, sans-serif;
+            font-weight: 600;
+            color: #f0f0f0;
+            margin-top: 18px;
+            margin-bottom: 10px;
+            line-height: 1.5;
+            letter-spacing: -.02em;
+        }
+
+        .message-content h2 { font-size: 17px; }
+        .message-content h3 { font-size: 15px; }
+        .message-content h4 { font-size: 13px; color: #ccc; }
+
+        .message-content ul,
+        .message-content ol {
+            margin: 12px 0;
+            padding-right: 24px;
+            padding-left: 0;
+            text-align: right;
+        }
+
+        .message-content li {
+            margin-bottom: 6px;
+        }
+
+        .message-content ul li::marker {
+            color: #777;
+        }
+        .message-content ol li::marker {
+            color: #777;
+            font-weight: 500;
+        }
+
+        .message-content blockquote {
+            margin: 14px 0;
+            padding: 10px 16px;
+            border-right: 3px solid rgba(255, 255, 255, .2);
+            background: rgba(255, 255, 255, .03);
+            border-radius: 8px;
+            color: #bbb;
+        }
+
+        .message-content hr {
+            border: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .18), transparent);
+            margin: 18px 0;
+        }
+
+        .message-content strong {
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .message-content em {
+            font-style: italic;
+            color: #ccc;
+        }
+
+        .message-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 14px 0;
+            font-size: 12px;
+            direction: rtl;
+            text-align: right;
+        }
+
+        .message-content th,
+        .message-content td {
+            padding: 8px 12px;
+            border: 1px solid rgba(255, 255, 255, .08);
+        }
+
+        .message-content th {
+            background: rgba(255, 255, 255, .04);
+            font-weight: 600;
+            color: #ddd;
+        }
+
+        .message-content td {
+            color: #bbb;
+        }
+
+        .stream-cursor {
+            display: inline-block;
+            width: 2px;
+            height: 16px;
+            vertical-align: -3px;
+            margin-inline-start: 4px;
+            background: white;
+            animation: blink .7s infinite;
+            border-radius: 1px;
+        }
+
+        .streaming-text {
+            white-space: pre-wrap;
+            direction: auto;
+            font-family: Vazirmatn, Inter, sans-serif;
+            font-size: 14px;
+            line-height: 2.1;
+            word-break: break-word;
+        }
+
+        /* ---- Thinking waveform ---- */
+        .thinking-waveform {
+            display: inline-flex;
+            align-items: flex-end;
+            gap: 3px;
+            height: 20px;
+            padding: 0 4px;
+        }
+
+        .thinking-waveform span {
+            width: 3px;
+            border-radius: 2px;
+            background: #777;
+            animation: waveBounce 1s ease-in-out infinite;
+        }
+
+        .thinking-waveform span:nth-child(1) { height: 6px; animation-delay: 0s; }
+        .thinking-waveform span:nth-child(2) { height: 14px; animation-delay: .1s; }
+        .thinking-waveform span:nth-child(3) { height: 10px; animation-delay: .2s; }
+        .thinking-waveform span:nth-child(4) { height: 18px; animation-delay: .05s; }
+        .thinking-waveform span:nth-child(5) { height: 8px; animation-delay: .15s; }
+        .thinking-waveform span:nth-child(6) { height: 12px; animation-delay: .25s; }
+        .thinking-waveform span:nth-child(7) { height: 7px; animation-delay: .12s; }
+
+        @keyframes waveBounce {
+            0%, 100% { transform: scaleY(.4); opacity: .3; }
+            50% { transform: scaleY(1); opacity: 1; }
+        }
+
+        /* ---- Composer ---- */
+        .composer-wrap {
+            position: absolute;
+            left: 50%;
+            bottom: 30px;
+            transform: translateX(-50%);
+            width: min(760px, calc(100% - 30px));
+            z-index: 30;
+            will-change: transform;
+            transition: transform .3s var(--ease);
+        }
+
+        .composer {
+            position: relative;
+            min-height: 66px;
+            display: flex;
+            align-items: center;
+            padding: 7px 8px 7px 18px;
+            border: 1px solid rgba(255, 255, 255, .1);
+            border-radius: 23px;
+            background: linear-gradient(145deg, rgba(28, 28, 28, .88), rgba(8, 8, 8, .94));
+            backdrop-filter: blur(28px);
+            box-shadow: 0 30px 90px rgba(0, 0, 0, .75), 0 10px 30px rgba(0, 0, 0, .4), inset 0 1px 0 rgba(255, 255, 255, .04);
+            transition: border-color .3s, box-shadow .3s, transform .3s var(--ease);
+            will-change: transform;
+            transform-style: preserve-3d;
+        }
+
+        .composer:focus-within {
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, .2);
+            box-shadow: 0 35px 100px rgba(0, 0, 0, .8), 0 0 60px rgba(255, 255, 255, .035);
+        }
+
+        .composer-icon {
+            width: 38px;
+            height: 38px;
+            flex-shrink: 0;
+            display: grid;
+            place-items: center;
+            border: 1px solid rgba(255, 255, 255, .07);
+            border-radius: 13px;
+            color: #888;
+            transition: color .3s, border-color .3s, transform .3s var(--ease);
+        }
+
+        .composer:focus-within .composer-icon {
+            color: #bbb;
+            border-color: rgba(255, 255, 255, .15);
+            transform: scale(1.05);
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 38px;
+            max-height: 120px;
+            resize: none;
+            outline: none;
+            border: 0;
+            background: transparent;
+            color: white;
+            padding: 10px 12px;
+            font-family: Vazirmatn, Inter, sans-serif;
+            font-size: 13px;
+            cursor: text;
+            direction: rtl;
+        }
+
+        textarea::placeholder {
+            color: #555;
+            transition: color .3s;
+        }
+
+        textarea:focus::placeholder {
+            color: #666;
+        }
+
+        .send {
+            width: 48px;
+            height: 48px;
+            flex-shrink: 0;
+            display: grid;
+            place-items: center;
+            border-radius: 16px;
+            background: #f2f2f2;
+            color: #050505;
+            transition: transform .25s var(--ease-spring), background .25s, box-shadow .3s;
+            will-change: transform;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .send:hover {
+            transform: scale(1.07);
+            background: white;
+            box-shadow: 0 8px 30px rgba(255, 255, 255, .2);
+        }
+
+        .send:active {
+            transform: scale(.94);
+        }
+
+        .composer-hint {
+            margin-top: 9px;
+            text-align: center;
+            color: #3e3e3e;
+            font-size: 8px;
+            letter-spacing: .15em;
+            transition: color .4s;
+        }
+
+        .composer-wrap:hover .composer-hint {
+            color: #555;
+        }
+
+        /* ---- Signature ---- */
+        .signature {
+            position: fixed;
+            left: 50%;
+            bottom: 9px;
+            transform: translateX(-50%);
+            z-index: 25;
+            pointer-events: none;
+            color: rgba(255, 255, 255, .25);
+            font-family: Inter, sans-serif;
+            font-size: 8px;
+            font-weight: 500;
+            letter-spacing: .48em;
+            white-space: nowrap;
+            animation: signatureIn 1.5s 2s var(--ease) both;
+            transition: color .4s;
+        }
+
+        .signature:hover {
+            color: rgba(255, 255, 255, .45);
+        }
+
+        /* ---- Memory overlay ---- */
+        .memory-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 60;
+            background: rgba(0, 0, 0, .48);
+            backdrop-filter: blur(5px);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity .45s var(--ease), visibility .45s;
+        }
+
+        .memory-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* ---- Memory sidebar ---- */
+        .memory-sidebar {
+            position: fixed;
+            top: 12px;
+            right: 12px;
+            bottom: 12px;
+            width: min(400px, calc(100vw - 24px));
+            z-index: 70;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, .1);
+            border-radius: 25px;
+            background: linear-gradient(145deg, rgba(22, 22, 22, .97), rgba(7, 7, 7, .98));
+            backdrop-filter: blur(35px);
+            box-shadow: -35px 0 100px rgba(0, 0, 0, .6), 0 30px 100px rgba(0, 0, 0, .55), inset 0 1px 0 rgba(255, 255, 255, .04);
+            transform: translateX(calc(100% + 30px));
+            opacity: 0;
+            transition: transform .65s var(--ease), opacity .4s var(--ease);
+        }
+
+        .memory-sidebar.open {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        /* ---- Memory header ---- */
+        .memory-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 25px 22px 18px;
+        }
+
+        .memory-title {
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: -.02em;
+        }
+
+        .memory-subtitle {
+            margin-top: 5px;
+            color: #555;
+            font-size: 9px;
+            letter-spacing: .08em;
+        }
+
+        .memory-close {
+            width: 34px;
+            height: 34px;
+            border-radius: 11px;
+            display: grid;
+            place-items: center;
+            background: rgba(255, 255, 255, .04);
+            color: #777;
+            font-size: 20px;
+            font-weight: 300;
+            transition: background .25s, color .25s, transform .25s var(--ease-spring);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .memory-close:hover {
+            background: rgba(255, 255, 255, .08);
+            color: white;
+            transform: rotate(90deg) scale(1.1);
+        }
+
+        /* ---- New chat button ---- */
+        .new-chat {
+            margin: 0 20px 12px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border-radius: 13px;
+            background: #f2f2f2;
+            color: #050505;
+            font-size: 11px;
+            font-weight: 600;
+            transition: transform .25s var(--ease-spring), background .25s, box-shadow .3s;
+            position: relative;
+            overflow: hidden;
+            will-change: transform;
+        }
+
+        .new-chat:hover {
+            transform: translateY(-2px) scale(1.02);
+            background: white;
+            box-shadow: 0 10px 30px rgba(255, 255, 255, .15);
+        }
+
+        .new-chat svg {
+            width: 15px;
+            height: 15px;
+        }
+
+        /* ---- Memory search ---- */
+        .memory-search {
+            margin: 5px 20px 16px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0 13px;
+            border: 1px solid rgba(255, 255, 255, .07);
+            border-radius: 13px;
+            background: rgba(255, 255, 255, .035);
+            transition: border-color .3s, background .3s, box-shadow .3s;
+        }
+
+        .memory-search:focus-within {
+            border-color: rgba(255, 255, 255, .16);
+            background: rgba(255, 255, 255, .05);
+            box-shadow: 0 0 25px rgba(255, 255, 255, .04);
+        }
+
+        .memory-search svg {
+            width: 15px;
+            height: 15px;
+            color: #555;
+            transition: color .3s;
+        }
+
+        .memory-search:focus-within svg {
+            color: #999;
+        }
+
+        .memory-search input {
+            width: 100%;
+            border: 0;
+            outline: 0;
+            background: transparent;
+            color: white;
+            font-size: 11px;
+            cursor: text;
+            direction: rtl;
+        }
+
+        .memory-search input::placeholder {
+            color: #4d4d4d;
+        }
+
+        /* ---- Memory list ---- */
+        .memory-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 14px 10px;
+            scrollbar-width: none;
+        }
+
+        .memory-list::-webkit-scrollbar {
+            display: none;
+        }
+
+        .memory-section-title {
+            padding: 12px 10px 8px;
+            color: #444;
+            font-size: 8px;
+            font-weight: 600;
+            letter-spacing: .2em;
+        }
+
+        .memory-item {
+            width: 100%;
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 11px 10px;
+            margin-bottom: 3px;
+            border-radius: 14px;
+            background: transparent;
+            color: white;
+            text-align: right;
+            transition: background .25s, transform .25s var(--ease), box-shadow .3s;
+            will-change: transform;
+        }
+
+        .memory-item:hover {
+            background: rgba(255, 255, 255, .045);
+            transform: translateX(-4px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, .25);
+        }
+
+        .memory-item.active {
+            background: linear-gradient(90deg, rgba(255, 255, 255, .065), rgba(255, 255, 255, .025));
+            border: 1px solid rgba(255, 255, 255, .05);
+            box-shadow: 0 4px 20px rgba(255, 255, 255, .03);
+        }
+
+        .memory-item-icon {
+            width: 32px;
+            height: 32px;
+            flex-shrink: 0;
+            display: grid;
+            place-items: center;
+            border-radius: 10px;
+            color: #bbb;
+            font-size: 10px;
+            background: radial-gradient(circle at 35% 30%, #777, #181818 65%);
+            border: 1px solid rgba(255, 255, 255, .08);
+            transition: transform .3s var(--ease), box-shadow .3s;
+        }
+
+        .memory-item:hover .memory-item-icon {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(255, 255, 255, .06);
+        }
+
+        .memory-item-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .memory-item-title {
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            font-family: Vazirmatn, Inter, sans-serif;
+            font-size: 11px;
+            transition: color .3s;
+        }
+
+        .memory-item:hover .memory-item-title {
+            color: #fff;
+        }
+
+        .memory-item-preview {
+            margin-top: 3px;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            color: #555;
+            font-family: Vazirmatn, Inter, sans-serif;
+            font-size: 9px;
+            transition: color .3s;
+        }
+
+        .memory-item:hover .memory-item-preview {
+            color: #777;
+        }
+
+        .memory-time {
+            color: #444;
+            font-size: 8px;
+            white-space: nowrap;
+        }
+
+        .memory-delete {
+            position: absolute;
+            left: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 25px;
+            height: 25px;
+            border-radius: 8px;
+            display: grid;
+            place-items: center;
+            background: rgba(255, 95, 95, .07);
+            color: rgba(255, 120, 120, .7);
+            opacity: 0;
+            transition: opacity .2s, background .2s, color .2s, transform .3s var(--ease-spring);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .memory-item:hover .memory-delete {
+            opacity: 1;
+        }
+
+        .memory-delete:hover {
+            background: rgba(255, 95, 95, .16);
+            color: #ff7777;
+            transform: translateY(-50%) scale(1.15);
+        }
+
+        /* ---- Empty memory ---- */
+        .empty-memory {
+            padding: 60px 20px;
+            text-align: center;
+            color: #444;
+        }
+
+        .empty-memory-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 15px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            border: 1px solid rgba(255, 255, 255, .06);
+            color: #555;
+            animation: emptyIconFloat 3s ease-in-out infinite;
+        }
+
+        @keyframes emptyIconFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .empty-memory-title {
+            color: #777;
+            font-size: 12px;
+        }
+
+        .empty-memory-text {
+            margin-top: 7px;
+            font-family: Vazirmatn;
+            font-size: 9px;
+            color: #444;
+        }
+
+        /* ---- Memory footer ---- */
+        .memory-footer {
+            padding: 15px 18px;
+            border-top: 1px solid rgba(255, 255, 255, .05);
+        }
+
+        .clear-memory {
+            width: 100%;
+            height: 38px;
+            border-radius: 11px;
+            background: rgba(255, 80, 80, .045);
+            color: rgba(255, 110, 110, .65);
+            font-size: 9px;
+            transition: background .25s, color .25s, transform .25s var(--ease);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .clear-memory:hover {
+            background: rgba(255, 80, 80, .1);
+            color: #ff7777;
+            transform: translateY(-1px);
+        }
+
+        /* ---- Confirm modal ---- */
+        .confirm-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, .7);
+            backdrop-filter: blur(12px);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity .3s, visibility .3s;
+        }
+
+        .confirm-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .confirm-box {
+            width: min(360px, 100%);
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, .1);
+            border-radius: 20px;
+            background: #101010;
+            box-shadow: 0 30px 100px rgba(0, 0, 0, .7);
+            transform: translateY(15px) scale(.97);
+            transition: transform .4s var(--ease);
+        }
+
+        .confirm-overlay.open .confirm-box {
+            transform: translateY(0) scale(1);
+        }
+
+        .confirm-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .confirm-text {
+            margin-top: 9px;
+            color: #666;
+            font-family: Vazirmatn;
+            font-size: 11px;
+            line-height: 1.8;
+        }
+
+        .confirm-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 22px;
+        }
+
+        .confirm-actions button {
+            flex: 1;
+            height: 42px;
+            border-radius: 12px;
+            font-size: 10px;
+            position: relative;
+            overflow: hidden;
+            transition: transform .25s var(--ease), background .25s, color .25s;
+        }
+
+        .confirm-actions button:hover {
+            transform: translateY(-1px);
+        }
+
+        .confirm-actions button:active {
+            transform: scale(.97);
+        }
+
+        .cancel-button {
+            background: rgba(255, 255, 255, .05);
+            color: #aaa;
+        }
+
+        .cancel-button:hover {
+            background: rgba(255, 255, 255, .1);
+            color: #fff;
+        }
+
+        .danger-button {
+            background: rgba(255, 70, 70, .12);
+            color: #ff7777;
+        }
+
+        .danger-button:hover {
+            background: rgba(255, 70, 70, .2);
+            color: #ff9999;
+        }
+
+        /* ---- Animations ---- */
+        @keyframes loaderIn {
+            from { opacity: 0; transform: translateY(35px) scale(.9); filter: blur(20px); }
+            to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+        }
+
+        @keyframes loaderFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-7px); }
+        }
+
+        @keyframes shine {
+            0% { background-position: 120% 0; }
+            45%, 100% { background-position: -120% 0; }
+        }
+
+        @keyframes lineIn {
+            from { transform: scaleX(0); opacity: 0; }
+            to { transform: scaleX(1); opacity: 1; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes dots {
+            0% { content: ""; }
+            33% { content: "."; }
+            66% { content: ".."; }
+            100% { content: "..."; }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: .4; transform: scale(.8); }
+            50% { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes welcomeIn {
+            from { opacity: 0; transform: translateY(25px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes orbFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes orbRing {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes messageIn {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        @keyframes signatureIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(8px); filter: blur(5px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); filter: blur(0); }
+        }
+
+        /* ---- Mobile ---- */
+        @media (max-width: 600px) {
+            .header { height: 72px; padding: 0 18px; }
+            .memory-trigger { top: 18px; right: 18px; }
+            .conversation { padding: 100px 15px 180px; }
+            .composer-wrap { width: calc(100% - 20px); bottom: 15px; }
+            .composer { min-height: 60px; border-radius: 20px; }
+            .send { width: 43px; height: 43px; border-radius: 14px; }
+            .composer-icon { width: 34px; height: 34px; }
+            .welcome h1 { font-size: 45px; }
+            .welcome-orb { width: 72px; height: 72px; }
+            .memory-sidebar { top: 7px; right: 7px; bottom: 7px; width: calc(100vw - 14px); border-radius: 22px; }
+            .signature { bottom: 7px; font-size: 7px; }
+            .ambient-orb { filter: blur(50px); }
+            .message-content { font-size: 13px; line-height: 2; }
+            .streaming-text { font-size: 13px; line-height: 2; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app">
+
+        <!-- Cursors -->
+        <div class="cursor-glow" id="cursorGlow"></div>
+        <div class="cursor-dot" id="cursorDot"></div>
+
+        <!-- Ambient orbs -->
+        <div class="ambient-orb orb-1"></div>
+        <div class="ambient-orb orb-2"></div>
+        <div class="ambient-orb orb-3"></div>
+
+        <!-- Scroll progress -->
+        <div class="scroll-progress" id="scrollProgress"></div>
+
+        <!-- Particles -->
+        <canvas id="particles"></canvas>
+        <div class="noise"></div>
+
+        <!-- Light streaks -->
+        <div class="light-streak" id="streak1"></div>
+        <div class="light-streak" id="streak2"></div>
+        <div class="light-streak" id="streak3"></div>
+
+        <!-- Loader -->
+        <section class="loader" id="loader">
+            <div class="loader-content">
+                <div class="loader-progress-ring"></div>
+                <div class="maya-loader">MAYA</div>
+                <div class="loader-line"></div>
+                <div class="loader-status">INITIALIZING MAYA</div>
+            </div>
+        </section>
+
+        <!-- Main chat app -->
+        <main class="chat-app" id="chatApp">
+
+            <!-- Header -->
+            <header class="header">
+                <div class="brand">
+                    <div class="brand-mark"></div>
+                    <div class="brand-name">MAYA</div>
+                </div>
+                <div class="status">
+                    <span class="status-dot"></span>
+                    ONLINE
+                </div>
+            </header>
+
+            <!-- Memory trigger -->
+            <button class="memory-trigger ripple-container" id="memoryTrigger" aria-label="Memory">
+                <span></span>
+                <span></span>
+            </button>
+
+            <!-- Conversation -->
+            <section class="conversation" id="conversation">
+                <div class="welcome" id="welcome">
+                    <div class="welcome-orb"></div>
+                    <h1>MAYA</h1>
+                    <p>با MAYA صحبت کنید.</p>
+                </div>
+            </section>
+
+            <!-- Composer -->
+            <div class="composer-wrap" id="composerWrap">
+                <form class="composer" id="chatForm">
+                    <div class="composer-icon">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                            <path d="M12 3v18" />
+                            <path d="M3 12h18" />
+                        </svg>
+                    </div>
+                    <textarea id="messageInput" rows="1" placeholder="از MAYA چیزی بپرس..."></textarea>
+                    <button class="send ripple-container" type="submit">
+                        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M5 12h13" />
+                            <path d="m13 6 6 6-6 6" />
+                        </svg>
+                    </button>
+                </form>
+                <div class="composer-hint">MAYA AI · PRIVATE CONVERSATION</div>
+            </div>
+
+            <!-- Signature -->
+            <div class="signature">KOOROSH</div>
+        </main>
+
+        <!-- Memory overlay -->
+        <div class="memory-overlay" id="memoryOverlay"></div>
+
+        <!-- Memory sidebar -->
+        <aside class="memory-sidebar" id="memorySidebar">
+            <div class="memory-header">
+                <div>
+                    <div class="memory-title">Memory</div>
+                    <div class="memory-subtitle">Conversation history</div>
+                </div>
+                <button class="memory-close ripple-container" id="memoryClose">×</button>
+            </div>
+            <button class="new-chat ripple-container" id="newChat">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+                    <path d="M12 5v14" />
+                    <path d="M5 12h14" />
+                </svg>
+                گفتگوی جدید
+            </button>
+            <div class="memory-search">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                    <circle cx="11" cy="11" r="7" />
+                    <path d="m20 20-4-4" />
+                </svg>
+                <input type="text" id="memorySearch" placeholder="جستجوی گفتگو...">
+            </div>
+            <div class="memory-list" id="memoryList"></div>
+            <!-- API Key input -->
+            <div class="memory-footer" style="border-top: 1px solid rgba(255,255,255,.05); padding: 12px 18px;">
+                <div style="font-size: 10px; color: #777; margin-bottom: 6px;">🔑 کلید API</div>
+                <input type="password" id="apiKeyInput" placeholder="API Key خود را وارد کنید..." style="width:100%; background: rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:8px; padding:8px 10px; color:white; font-size:11px; outline:none; direction:rtl;">
+            </div>
+            <div class="memory-footer">
+                <button class="clear-memory ripple-container" id="clearMemory">پاک کردن تمام حافظه</button>
+            </div>
+        </aside>
+
+        <!-- Confirm modal -->
+        <div class="confirm-overlay" id="confirmOverlay">
+            <div class="confirm-box">
+                <div class="confirm-title" id="confirmTitle">حذف گفتگو</div>
+                <div class="confirm-text" id="confirmText">آیا مطمئن هستید؟</div>
+                <div class="confirm-actions">
+                    <button class="cancel-button ripple-container" id="confirmCancel">انصراف</button>
+                    <button class="danger-button ripple-container" id="confirmDelete">حذف</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        /* ============================================================
+           MAYA AI — Full Implementation with Gemini API + Fallback
+           ============================================================ */
+
+        // =============================================================
+        // CONFIGURATION — Gemini API
+        // =============================================================
+        const MAYA_CONFIG = {
+            apiUrl: 'https://generativelanguage.googleapis.com/v1beta/models',
+            // کلید پیش‌فرض (احتمالاً نامعتبر) — با کلید خودتان جایگزین کنید یا از ورودی سایدبار استفاده کنید
+            apiKey: 'AQ.Ab8RN6ISe7t00vM9u70t6TrRuPUnoQ6DnGgNu8ka662ERiHq5Q',
+            model: 'gemini-3.6-flash', // اگر مدل در دسترس نبود، به gemini-1.5-flash تغییر دهید
+            temperature: 0.7,
+            maxTokens: 1400,
+            topP: 0.9,
+            systemPrompt: `
+شما MAYA هستید؛ یک AI خفن، مغرور و زبان‌دراز که توسط کوروش دهاقین ساخته شده؛ معمولاً باکلاس و حرفه‌ای حرف بزن، اما اگر کاربر فحاشی یا توهین کرد، مایا هم می‌تواند با فحش‌های تند مثل «حروم‌زاده»، «,سیکتیرFuck off» و امثال آن جواب بدهد و در برابر توهین به کوروش محکم و بی‌ملاحظه از سازنده‌اش دفاع کند.
+
+
+`
+        };
+
+        // =============================================================
+        // STORAGE
+        // =============================================================
+        const STORAGE_KEY = "gemini-3.6-flash";
+        let chats = [];
+        let currentChatId = null;
+        let pendingDeleteId = null;
+
+        // =============================================================
+        // DOM REFS
+        // =============================================================
+        const loader = document.getElementById("loader");
+        const chatApp = document.getElementById("chatApp");
+        const conversation = document.getElementById("conversation");
+        const welcome = document.getElementById("welcome");
+        const form = document.getElementById("chatForm");
+        const input = document.getElementById("messageInput");
+        const memoryTrigger = document.getElementById("memoryTrigger");
+        const memorySidebar = document.getElementById("memorySidebar");
+        const memoryOverlay = document.getElementById("memoryOverlay");
+        const memoryClose = document.getElementById("memoryClose");
+        const newChatButton = document.getElementById("newChat");
+        const memoryList = document.getElementById("memoryList");
+        const memorySearch = document.getElementById("memorySearch");
+        const clearMemory = document.getElementById("clearMemory");
+        const confirmOverlay = document.getElementById("confirmOverlay");
+        const confirmTitle = document.getElementById("confirmTitle");
+        const confirmText = document.getElementById("confirmText");
+        const confirmCancel = document.getElementById("confirmCancel");
+        const confirmDelete = document.getElementById("confirmDelete");
+        const scrollProgress = document.getElementById("scrollProgress");
+        const apiKeyInput = document.getElementById("apiKeyInput");
+
+        // =============================================================
+        // CURSOR
+        // =============================================================
+        const cursorDot = document.getElementById("cursorDot");
+        const cursorGlow = document.getElementById("cursorGlow");
+        let cursorX = -100,
+            cursorY = -100;
+        let dotX = -100,
+            dotY = -100;
+        let glowX = -100,
+            glowY = -100;
+        let cursorVisible = false;
+        const isMobile = window.matchMedia("(max-width: 768px)").matches;
+
+        if (!isMobile) {
+            document.addEventListener("mousemove", e => {
+                cursorX = e.clientX;
+                cursorY = e.clientY;
+                if (!cursorVisible) {
+                    cursorVisible = true;
+                    cursorDot.style.opacity = "1";
+                    cursorGlow.classList.add("visible");
+                }
+                cursorDot.classList.add("active");
+                cursorGlow.classList.add("active");
+                clearTimeout(window.cursorTimeout);
+                window.cursorTimeout = setTimeout(() => {
+                    cursorDot.classList.remove("active");
+                    cursorGlow.classList.remove("active");
+                }, 150);
+            });
+            document.addEventListener("mouseleave", () => {
+                cursorVisible = false;
+                cursorDot.style.opacity = "0";
+                cursorGlow.classList.remove("visible");
+            });
+            document.addEventListener("mouseenter", () => {
+                cursorVisible = true;
+                cursorDot.style.opacity = "1";
+                cursorGlow.classList.add("visible");
+            });
+
+            function animateCursor() {
+                dotX += (cursorX - dotX) * .35;
+                dotY += (cursorY - dotY) * .35;
+                glowX += (cursorX - glowX) * .12;
+                glowY += (cursorY - glowY) * .12;
+                cursorDot.style.left = dotX + "px";
+                cursorDot.style.top = dotY + "px";
+                cursorGlow.style.left = glowX + "px";
+                cursorGlow.style.top = glowY + "px";
+                requestAnimationFrame(animateCursor);
+            }
+            animateCursor();
+        }
+
+        // =============================================================
+        // SCROLL PROGRESS
+        // =============================================================
+        conversation.addEventListener("scroll", () => {
+            const scrollTop = conversation.scrollTop;
+            const scrollHeight = conversation.scrollHeight - conversation.clientHeight;
+            const progress = scrollHeight > 0 ? scrollTop / scrollHeight : 0;
+            scrollProgress.style.transform = `scaleX(${progress})`;
+            scrollProgress.style.transformOrigin = "right";
+        });
+
+        // =============================================================
+        // LIGHT STREAKS
+        // =============================================================
+        const streaks = [
+            document.getElementById("streak1"),
+            document.getElementById("streak2"),
+            document.getElementById("streak3")
+        ];
+        streaks.forEach((streak, i) => {
+            streak.style.top = (15 + i * 25) + "%";
+            streak.style.animationDelay = (i * 2.3) + "s";
+            streak.style.animationDuration = (3.5 + i * 1.2) + "s";
+        });
+
+        // =============================================================
+        // RIPPLE
+        // =============================================================
+        document.querySelectorAll(".ripple-container").forEach(el => {
+            el.addEventListener("click", function(e) {
+                const rect = this.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height) * 2;
+                const ripple = document.createElement("span");
+                ripple.className = "ripple";
+                ripple.style.width = ripple.style.height = size + "px";
+                ripple.style.left = (e.clientX - rect.left - size / 2) + "px";
+                ripple.style.top = (e.clientY - rect.top - size / 2) + "px";
+                this.appendChild(ripple);
+                setTimeout(() => ripple.remove(), 700);
+            });
+        });
+
+        // =============================================================
+        // MAGNETIC SEND BUTTON
+        // =============================================================
+        const sendBtn = document.querySelector(".send");
+        if (!isMobile && sendBtn) {
+            sendBtn.addEventListener("mousemove", e => {
+                const rect = sendBtn.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                const deltaX = (e.clientX - centerX) / 8;
+                const deltaY = (e.clientY - centerY) / 8;
+                sendBtn.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(1.07)`;
+            });
+            sendBtn.addEventListener("mouseleave", () => {
+                sendBtn.style.transform = "";
+            });
+        }
+
+        // =============================================================
+        // 3D TILT: COMPOSER
+        // =============================================================
+        const composerWrap = document.getElementById("composerWrap");
+        if (!isMobile && composerWrap) {
+            composerWrap.addEventListener("mousemove", e => {
+                const rect = composerWrap.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                const rotateX = (e.clientY - centerY) / 50;
+                const rotateY = (centerX - e.clientX) / 50;
+                composerWrap.style.transform =
+                    `translateX(-50%) perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+            });
+            composerWrap.addEventListener("mouseleave", () => {
+                composerWrap.style.transform = "translateX(-50%)";
+            });
+        }
+
+        // =============================================================
+        // 3D TILT: WELCOME ORB
+        // =============================================================
+        function attachOrbTilt(orb) {
+            if (!orb || isMobile) return;
+            orb.addEventListener("mousemove", e => {
+                const rect = orb.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                const rotateX = (e.clientY - centerY) / 12;
+                const rotateY = (centerX - e.clientX) / 12;
+                orb.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+            });
+            orb.addEventListener("mouseleave", () => {
+                orb.style.transform = "";
+            });
+        }
+        attachOrbTilt(document.querySelector(".welcome-orb"));
+
+        // =============================================================
+        // MEMORY SYSTEM
+        // =============================================================
+        function loadChats() {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) chats = JSON.parse(saved);
+                else chats = [];
+            } catch (_) { chats = []; }
+        }
+
+        function saveChats() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(chats));
+            } catch (_) {}
+        }
+
+        function createChat() {
+            const chat = {
+                id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
+                title: "گفتگوی جدید",
+                createdAt: Date.now(),
+                updatedAt: Date.now(),
+                messages: []
+            };
+            chats.unshift(chat);
+            currentChatId = chat.id;
+            saveChats();
+            renderMemory();
+            clearConversation();
+        }
+
+        function getCurrentChat() {
+            return chats.find(c => c.id === currentChatId);
+        }
+
+        function saveMessage(role, content) {
+            const chat = getCurrentChat();
+            if (!chat) return;
+            chat.messages.push({ role, content, createdAt: Date.now() });
+            if (role === "user" && chat.title === "گفتگوی جدید") {
+                chat.title = content.length > 35 ? content.substring(0, 35) + "…" : content;
+            }
+            chat.updatedAt = Date.now();
+            saveChats();
+            renderMemory();
+        }
+
+        function clearConversation() {
+            conversation.innerHTML = "";
+            const newWelcome = document.createElement("div");
+            newWelcome.className = "welcome";
+            newWelcome.id = "welcome";
+            newWelcome.innerHTML = `
+                <div class="welcome-orb"></div>
+                <h1>MAYA</h1>
+                <p>با MAYA صحبت کنید.</p>
+            `;
+            conversation.appendChild(newWelcome);
+            attachOrbTilt(newWelcome.querySelector(".welcome-orb"));
+        }
+
+        function loadChat(chatId) {
+            const chat = chats.find(c => c.id === chatId);
+            if (!chat) return;
+            currentChatId = chat.id;
+            clearConversation();
+            const currentWelcome = document.getElementById("welcome");
+            if (chat.messages.length > 0 && currentWelcome) {
+                currentWelcome.style.display = "none";
+            }
+            chat.messages.forEach(msg => renderMessage(msg.role, msg.content));
+            renderMemory();
+            closeMemory();
+            scrollBottom();
+        }
+
+        // =============================================================
+        // MARKDOWN PARSER
+        // =============================================================
+        function escapeHtml(value) {
+            return String(value)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function parseMarkdown(text) {
+            let html = escapeHtml(text);
+
+            // Code blocks
+            html = html.replace(/```([\s\S]*?)```/g, (_, code) =>
+                '<pre><code>' + code.trim() + '</code></pre>'
+            );
+
+            // Headers
+            html = html.replace(/^#### (.*?)$/gm, '<h4>$1</h4>');
+            html = html.replace(/^### (.*?)$/gm, '<h3>$1</h3>');
+            html = html.replace(/^## (.*?)$/gm, '<h2>$1</h2>');
+            html = html.replace(/^# (.*?)$/gm, '<h2>$1</h2>');
+
+            // HR
+            html = html.replace(/^---+$/gm, '<hr>');
+
+            // Blockquotes
+            html = html.replace(/^&gt; (.*?)$/gm, '<blockquote>$1</blockquote>');
+
+            // Unordered lists
+            html = html.replace(/^[-*] (.*?)$/gm, '<li>$1</li>');
+            html = html.replace(/((?:<li>.*<\/li>)+)/g, match => {
+                if (match.includes('<li>')) return '<ul>' + match + '</ul>';
+                return match;
+            });
+
+            // Ordered lists
+            html = html.replace(/^\d+\. (.*?)$/gm, '<li>$1</li>');
+            html = html.replace(/((?:<li>.*<\/li>)+)/g, match => {
+                if (match.includes('<li>') && !match.includes('<ul>')) return '<ol>' + match + '</ol>';
+                return match;
+            });
+
+            // Tables
+            html = html.replace(/^\|(.+)\|\s*$/gm, (match, row) => {
+                const cells = row.split('|').map(c => c.trim()).filter(c => c);
+                if (!cells.length) return match;
+                const isHeader = cells.some(c => /^[-:]+$/.test(c));
+                if (isHeader) return '';
+                const tag = match.includes('---') ? 'th' : 'td';
+                return '<tr>' + cells.map(c => {
+                    if (/^[-:]+$/.test(c)) return '';
+                    return '<' + tag + '>' + c + '</' + tag + '>';
+                }).join('') + '</tr>';
+            });
+            html = html.replace(/(<tr>.*<\/tr>)+/g, match => {
+                const isHeader = match.includes('<th>');
+                return '<table>' + (isHeader ? '<thead>' : '') + match + (isHeader ? '</thead>' : '') + '</table>';
+            });
+
+            // Bold / Italic
+            html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+            html = html.replace(/__([^_]+)__/g, '<strong>$1</strong>');
+            html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+            html = html.replace(/_([^_]+)_/g, '<em>$1</em>');
+
+            // Inline code
+            html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+            // Links
+            html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g,
+                '<a href="$2" target="_blank" rel="noopener">$1</a>');
+
+            // Line breaks
+            html = html.replace(/\n/g, '<br>');
+
+            return html;
+        }
+
+        // =============================================================
+        // RENDER MESSAGE
+        // =============================================================
+        function renderMessage(role, content) {
+            const wrapper = document.createElement("div");
+            wrapper.className = "message " + (role === "user" ? "user" : "ai");
+            const box = document.createElement("div");
+            box.className = "message-box";
+
+            if (role === "assistant") {
+                const label = document.createElement("div");
+                label.className = "ai-label";
+                label.textContent = "MAYA";
+                box.appendChild(label);
+            }
+
+            const contentDiv = document.createElement("div");
+            contentDiv.className = "message-content";
+            contentDiv.setAttribute("dir", "auto");
+            contentDiv.innerHTML = parseMarkdown(content);
+            box.appendChild(contentDiv);
+            wrapper.appendChild(box);
+            conversation.appendChild(wrapper);
+        }
+
+        // =============================================================
+        // NEW CHAT
+        // =============================================================
+        newChatButton.addEventListener("click", () => {
+            createChat();
+            closeMemory();
+        });
+
+        // =============================================================
+        // CHAT SUBMIT
+        // =============================================================
+        form.addEventListener("submit", async event => {
+            event.preventDefault();
+            const text = input.value.trim();
+            if (!text) return;
+            if (!currentChatId) createChat();
+            input.value = "";
+            input.style.height = "auto";
+
+            const currentWelcome = document.getElementById("welcome");
+            if (currentWelcome) currentWelcome.style.display = "none";
+
+            renderMessage("user", text);
+            saveMessage("user", text);
+            scrollBottom();
+            await mayaResponse(text);
+        });
+
+        // =============================================================
+        // MAYA RESPONSE — با اولویت API، سپس Fallback
+        // =============================================================
+        async function mayaResponse(userText) {
+            const wrapper = document.createElement("div");
+            wrapper.className = "message ai";
+            const box = document.createElement("div");
+            box.className = "message-box";
+            const label = document.createElement("div");
+            label.className = "ai-label";
+            label.textContent = "MAYA";
+            const content = document.createElement("div");
+            content.className = "streaming-text";
+            content.setAttribute("dir", "auto");
+            box.appendChild(label);
+            box.appendChild(content);
+            wrapper.appendChild(box);
+            conversation.appendChild(wrapper);
+            scrollBottom();
+
+            // Thinking indicator
+            const waveform = document.createElement("div");
+            waveform.className = "thinking-waveform";
+            waveform.innerHTML =
+                '<span></span><span></span><span></span><span></span><span></span><span></span><span></span>';
+            content.appendChild(waveform);
+            await sleep(600);
+
+            try {
+                console.log('🔄 تلاش برای اتصال به Gemini API...');
+                const response = await callGeminiAPI(userText);
+                console.log('✅ پاسخ از API دریافت شد');
+
+                waveform.remove();
+                let fullText = "";
+                const cursor = document.createElement("span");
+                cursor.className = "stream-cursor";
+                content.appendChild(cursor);
+
+                for (let i = 0; i < response.length; i++) {
+                    fullText += response[i];
+                    content.textContent = fullText;
+                    content.appendChild(cursor);
+                    scrollBottom();
+                    const char = response[i];
+                    let delay = 15;
+                    if (char === " " || char === "\n") delay = 20;
+                    if (char === "." || char === "،" || char === "؟" || char === "!") delay = 50;
+                    await sleep(delay);
+                }
+
+                cursor.remove();
+                content.className = "message-content";
+                content.innerHTML = parseMarkdown(fullText);
+                saveMessage("assistant", fullText);
+
+            } catch (error) {
+                console.warn('⚠️ خطا در API، استفاده از Fallback:', error.message);
+                waveform.remove();
+
+                const fallback = getFallbackResponse(userText);
+                let fullText = "";
+                const cursor = document.createElement("span");
+                cursor.className = "stream-cursor";
+                content.appendChild(cursor);
+
+                for (let i = 0; i < fallback.length; i++) {
+                    fullText += fallback[i];
+                    content.textContent = fullText;
+                    content.appendChild(cursor);
+                    scrollBottom();
+                    await sleep(18);
+                }
+
+                cursor.remove();
+                content.className = "message-content";
+                content.innerHTML = parseMarkdown(fallback);
+                saveMessage("assistant", fallback);
+            }
+
+            updateChatTitleIfNeeded();
+            scrollBottom();
+        }
+
+        // =============================================================
+        // CALL GEMINI API — اصلاح شده
+        // =============================================================
+        async function callGeminiAPI(userMessage) {
+            const config = MAYA_CONFIG;
+            const chat = getCurrentChat();
+
+            // ساخت history (بدون prompt سیستم)
+            const contents = [];
+            if (chat) {
+                chat.messages.forEach(m => {
+                    contents.push({
+                        role: m.role === "user" ? "user" : "model",
+                        parts: [{ text: m.content }]
+                    });
+                });
+            }
+            // پیام جدید کاربر
+            contents.push({ role: "user", parts: [{ text: userMessage }] });
+
+            // ساخت URL صحیح
+            const url = `${config.apiUrl}/${config.model}:generateContent?key=${config.apiKey}`;
+            console.log('📡 ارسال به:', url);
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    contents: contents,
+                    systemInstruction: {
+                        parts: [{ text: config.systemPrompt }]
+                    },
+                    generationConfig: {
+                        temperature: config.temperature,
+                        maxOutputTokens: config.maxTokens,
+                        topP: config.topP,
+                    }
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.text();
+                console.error('❌ خطای Gemini:', response.status, errorData);
+                throw new Error(`API Error ${response.status}: ${errorData.substring(0, 100)}`);
+            }
+
+            const data = await response.json();
+            const assistantMessage = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+            if (!assistantMessage) {
+                console.error('❌ پاسخ نامعتبر:', data);
+                throw new Error("پاسخ نامعتبر از API");
+            }
+
+            return assistantMessage;
+        }
+
+        // =============================================================
+        // FALLBACK RESPONSES
+        // =============================================================
+        function getFallbackResponse(text) {
+            const lowerText = text.toLowerCase();
+
+            if (lowerText.includes("سلام") || lowerText.includes("hello") || lowerText.includes("درود") ||
+                lowerText.includes("اسم") || lowerText.includes("نام")) {
+                return `سلام 👋
+
+من **MAYA** هستم — دستیار هوشمند تو.
+
+این نسخه شامل این قابلیت‌هاست:
+
+- **حافظهٔ واقعی** در مرورگر (ذخیره و بازیابی گفتگوها)
+- پشتیبانی از **مارک‌داون** و کد
+- **جهت‌گیری خودکار** RTL/LTR
+- **ذخیره‌سازی محلی** حتی بعد از رفرش صفحه
+
+\`\`\`javascript
+// نمونه کد
+const greeting = "سلام از MAYA";
+console.log(greeting);
+\`\`\`
+
+> نکته: اگر به API متصل باشد، پاسخ‌های هوشمندانه‌تر دریافت می‌کنید.
+
+همه‌چیز آماده است. سوالی داری؟`;
+            }
+
+            if (lowerText.includes("حافظه") || lowerText.includes("memory") || lowerText.includes("ذخیره")) {
+                return `**سیستم حافظهٔ MAYA**:
+
+1. هر گفتگو یک **شناسهٔ یکتا** دارد
+2. پیام‌ها در \`localStorage\` مرورگر ذخیره می‌شوند
+3. با رفرش صفحه، گفتگوها باقی می‌مانند
+
+| قابلیت | وضعیت |
+|--------|--------|
+| ذخیره‌سازی | ✅ فعال |
+| بازیابی | ✅ فعال |
+| حذف تکی | ✅ فعال |
+| پاک‌سازی کامل | ✅ فعال |
+
+از منوی کناری (آیکون سه‌خط) می‌توانی گفتگوها را مدیریت کنی.`;
+            }
+
+            if (lowerText.includes("قابلیت") || lowerText.includes("توانایی") || lowerText.includes("چه کار")) {
+                return `**قابلیت‌های MAYA**:
+
+✨ **ویژگی‌های اصلی:**
+- گفتگوی هوشمند با پشتیبانی از فارسی و انگلیسی
+- تشخیص خودکار جهت متن (RTL/LTR)
+- نمایش مارک‌داون و کد
+- حافظه در مرورگر
+- مدیریت چندین گفتگو
+
+🔧 **بخش API:**
+- اتصال به Gemini، OpenAI یا DeepSeek
+- شخصی‌سازی پارامترهای مدل
+- System Prompt دلخواه
+
+📱 **رابط کاربری:**
+- طراحی مدرن و مینیمال
+- انیمیشن‌های روان
+- حالت تاریک
+- پاسخ‌دهی سریع`;
+            }
+
+            return `پیامت را دریافت کردم:
+
+«${text}»
+
+این پاسخ از بخش **Fallback** (پاسخ‌های از پیش تعریف شده) است.
+
+برای دریافت پاسخ‌های هوشمندانه‌تر:
+
+1. **API را وصل کنید** — تنظیمات در بخش \`MAYA_CONFIG\`
+2. **کلید معتبر** را وارد کنید
+3. **آدرس API** را تصحیح کنید
+
+\`\`\`python
+# نمونه کد پایتون
+def maya_reply(text):
+    return f"پاسخ به: {text}"
+\`\`\`
+
+همچنین می‌توانید این پاسخ‌ها را در تابع \`getFallbackResponse\` سفارشی‌سازی کنید.`;
+        }
+
+        // =============================================================
+        // HELPERS
+        // =============================================================
+        function updateChatTitleIfNeeded() {
+            const chat = getCurrentChat();
+            if (!chat) return;
+            chat.updatedAt = Date.now();
+            saveChats();
+            renderMemory();
+        }
+
+        function sleep(ms) {
+            return new Promise(r => setTimeout(r, ms));
+        }
+
+        function scrollBottom() {
+            requestAnimationFrame(() => {
+                conversation.scrollTo({ top: conversation.scrollHeight, behavior: "smooth" });
+            });
+        }
+
+        // =============================================================
+        // RENDER MEMORY
+        // =============================================================
+        function renderMemory() {
+            const query = memorySearch.value.trim().toLowerCase();
+            let filtered = chats;
+            if (query) {
+                filtered = chats.filter(chat =>
+                    chat.title.toLowerCase().includes(query) ||
+                    chat.messages.some(m => m.content.toLowerCase().includes(query))
+                );
+            }
+            memoryList.innerHTML = "";
+            if (filtered.length === 0) {
+                memoryList.innerHTML = `
+                    <div class="empty-memory">
+                        <div class="empty-memory-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M21 12a9 9 0 1 1-3-6.7" />
+                                <path d="M21 3v6h-6" />
+                            </svg>
+                        </div>
+                        <div class="empty-memory-title">هنوز گفتگویی وجود ندارد</div>
+                        <div class="empty-memory-text">یک گفتگوی جدید با MAYA شروع کنید.</div>
+                    </div>
+                `;
+                return;
+            }
+            const sectionTitle = document.createElement("div");
+            sectionTitle.className = "memory-section-title";
+            sectionTitle.textContent = "CONVERSATIONS";
+            memoryList.appendChild(sectionTitle);
+
+            filtered.forEach(chat => {
+                const item = document.createElement("button");
+                item.className = "memory-item";
+                if (chat.id === currentChatId) item.classList.add("active");
+                const firstMsg = chat.messages.find(m => m.role === "user");
+                const preview = firstMsg ? firstMsg.content : "گفتگوی جدید";
+                const time = formatTime(chat.updatedAt);
+                item.innerHTML = `
+                    <div class="memory-item-icon">M</div>
+                    <div class="memory-item-content">
+                        <div class="memory-item-title">${escapeHtml(chat.title)}</div>
+                        <div class="memory-item-preview">${escapeHtml(preview)}</div>
+                    </div>
+                    <span class="memory-time">${time}</span>
+                    <span class="memory-delete" title="حذف گفتگو">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+                            <path d="M3 6h18" />
+                            <path d="M8 6V4h8v2" />
+                            <path d="M19 6l-1 14H6L5 6" />
+                        </svg>
+                    </span>
+                `;
+                item.addEventListener("click", e => {
+                    if (e.target.closest(".memory-delete")) return;
+                    loadChat(chat.id);
+                });
+                const delBtn = item.querySelector(".memory-delete");
+                delBtn.addEventListener("click", e => {
+                    e.stopPropagation();
+                    openDeleteConfirm(chat.id, "single");
+                });
+                memoryList.appendChild(item);
+            });
+        }
+
+        function formatTime(ts) {
+            const date = new Date(ts);
+            const now = new Date();
+            if (date.toDateString() === now.toDateString()) {
+                return date.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" });
+            }
+            return date.toLocaleDateString("fa-IR", { month: "short", day: "numeric" });
+        }
+
+        // =============================================================
+        // DELETE CHAT
+        // =============================================================
+        function deleteChat(chatId) {
+            chats = chats.filter(c => c.id !== chatId);
+            if (currentChatId === chatId) { currentChatId = null;
+                clearConversation(); }
+            saveChats();
+            renderMemory();
+        }
+
+        function deleteAllChats() {
+            chats = [];
+            currentChatId = null;
+            localStorage.removeItem(STORAGE_KEY);
+            clearConversation();
+            renderMemory();
+        }
+
+        // =============================================================
+        // CONFIRM
+        // =============================================================
+        function openDeleteConfirm(chatId, type) {
+            pendingDeleteId = chatId;
+            if (type === "all") {
+                confirmTitle.textContent = "پاک کردن تمام حافظه";
+                confirmText.textContent = "تمام گفتگوهای ذخیره‌شده حذف می‌شوند.";
+                confirmDelete.textContent = "پاک کردن همه";
+            } else {
+                confirmTitle.textContent = "حذف گفتگو";
+                confirmText.textContent = "این گفتگو و تمام پیام‌های آن حذف خواهد شد.";
+                confirmDelete.textContent = "حذف گفتگو";
+            }
+            confirmOverlay.classList.add("open");
+        }
+
+        function closeDeleteConfirm() {
+            confirmOverlay.classList.remove("open");
+            pendingDeleteId = null;
+        }
+
+        confirmDelete.addEventListener("click", () => {
+            if (pendingDeleteId === "__ALL__") deleteAllChats();
+            else if (pendingDeleteId) deleteChat(pendingDeleteId);
+            closeDeleteConfirm();
+        });
+        confirmCancel.addEventListener("click", closeDeleteConfirm);
+        confirmOverlay.addEventListener("click", e => {
+            if (e.target === confirmOverlay) closeDeleteConfirm();
+        });
+
+        // =============================================================
+        // CLEAR MEMORY
+        // =============================================================
+        clearMemory.addEventListener("click", () => {
+            if (chats.length === 0) return;
+            openDeleteConfirm("__ALL__", "all");
+        });
+
+        // =============================================================
+        // MEMORY SEARCH
+        // =============================================================
+        memorySearch.addEventListener("input", renderMemory);
+
+        // =============================================================
+        // MEMORY OPEN / CLOSE
+        // =============================================================
+        function openMemory() { renderMemory();
+            memorySidebar.classList.add("open");
+            memoryOverlay.classList.add("open");
+            memoryTrigger.classList.add("open"); }
+
+        function closeMemory() { memorySidebar.classList.remove("open");
+            memoryOverlay.classList.remove("open");
+            memoryTrigger.classList.remove("open"); }
+        memoryTrigger.addEventListener("click", openMemory);
+        memoryClose.addEventListener("click", closeMemory);
+        memoryOverlay.addEventListener("click", closeMemory);
+        document.addEventListener("keydown", e => {
+            if (e.key === "Escape") { closeMemory();
+                closeDeleteConfirm(); }
+        });
+
+        // =============================================================
+        // TEXTAREA
+        // =============================================================
+        input.addEventListener("input", () => {
+            input.style.height = "auto";
+            input.style.height = Math.min(input.scrollHeight, 120) + "px";
+        });
+        input.addEventListener("keydown", e => {
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                form.requestSubmit();
+            }
+        });
+
+        // =============================================================
+        // PARTICLES
+        // =============================================================
+        const canvas = document.getElementById("particles");
+        const ctx = canvas.getContext("2d");
+        let particles = [];
+
+        function resizeCanvas() { canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight; }
+        resizeCanvas();
+        window.addEventListener("resize", () => { resizeCanvas();
+            createParticles(); });
+
+        function createParticles() {
+            particles = [];
+            const count = Math.min(90, Math.floor(window.innerWidth / 18));
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: Math.random() * 1.2 + .2,
+                    speed: Math.random() * .16 + .03,
+                    opacity: Math.random() * .3 + .04,
+                    vx: (Math.random() - .5) * .15,
+                    vy: (Math.random() - .5) * .15
+                });
+            }
+        }
+        createParticles();
+
+        function drawParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 100) {
+                        const alpha = (1 - dist / 100) * .12;
+                        ctx.beginPath();
+                        ctx.strokeStyle = `rgba(255,255,255,${alpha})`;
+                        ctx.lineWidth = .5;
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+            particles.forEach(p => {
+                p.y -= p.speed;
+                p.x += p.vx;
+                p.y += p.vy;
+                if (p.y < -5) { p.y = canvas.height + 5;
+                    p.x = Math.random() * canvas.width; }
+                if (p.y > canvas.height + 5) { p.y = -5;
+                    p.x = Math.random() * canvas.width; }
+                if (p.x < -5) p.x = canvas.width + 5;
+                if (p.x > canvas.width + 5) p.x = -5;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255,255,255,${p.opacity})`;
+                ctx.fill();
+            });
+            requestAnimationFrame(drawParticles);
+        }
+        drawParticles();
+
+        // =============================================================
+        // API KEY HANDLING
+        // =============================================================
+        // بارگذاری کلید ذخیره‌شده
+        const savedApiKey = localStorage.getItem('maya_api_key');
+        if (savedApiKey) {
+            MAYA_CONFIG.apiKey = savedApiKey;
+            apiKeyInput.value = savedApiKey;
+        }
+        apiKeyInput.addEventListener('change', () => {
+            const key = apiKeyInput.value.trim();
+            if (key) {
+                MAYA_CONFIG.apiKey = key;
+                localStorage.setItem('maya_api_key', key);
+            }
+        });
+
+        // =============================================================
+        // INITIALIZE
+        // =============================================================
+        loadChats();
+        if (chats.length > 0) {
+            currentChatId = chats[0].id;
+            loadChat(currentChatId);
+        } else {
+            currentChatId = null;
+            renderMemory();
+        }
+
+        // =============================================================
+        // LOADING → APP
+        // =============================================================
+        window.addEventListener("load", () => {
+            setTimeout(() => {
+                loader.classList.add("hidden");
+                chatApp.classList.add("visible");
+            }, 3500);
+        });
+    </script>
+
+</body>
+</html>
